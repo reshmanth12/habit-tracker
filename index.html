@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HABIT TRACKER DAILY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060a13;
+    --bg-grid: rgba(62,230,255,0.035);
+    --panel:#0d1524;
+    --panel-alt:#121c30;
+    --cyan:#3ee6ff;
+    --cyan-dim: rgba(62,230,255,0.35);
+    --violet:#9b6bff;
+    --amber:#ffb84d;
+    --danger:#ff5d7a;
+    --green:#5dffa0;
+    --text:#e6f0fb;
+    --text-dim:#7d8ba3;
+    --text-faint:#3d4a60;
+    --border: rgba(62,230,255,0.18);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(155,107,255,0.12), transparent 45%),
+      radial-gradient(ellipse at 100% 0%, rgba(62,230,255,0.10), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Rajdhani', sans-serif;
+    background-attachment: fixed;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 75%);
+  }
+  .wrap{ position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:32px 24px 80px; }
+
+  header{ display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
+  .logo{ display:flex; align-items:center; gap:12px; }
+  .logo-mark{
+    width:38px; height:38px; border-radius:8px;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 0 22px rgba(62,230,255,0.45);
+    flex-shrink:0;
+  }
+  .logo-mark svg{ width:20px; height:20px; }
+  .logo h1{
+    font-family:'Orbitron', sans-serif; font-weight:700; font-size:20px;
+    letter-spacing:2px; margin:0; color:var(--text);
+  }
+  .logo p{ margin:2px 0 0; font-size:12px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; }
+
+  .month-nav{ display:flex; align-items:center; gap:14px; }
+  .month-nav button{
+    width:36px; height:36px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel); color:var(--cyan); cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center; transition: all .15s ease;
+  }
+  .month-nav button:hover{ background:var(--panel-alt); box-shadow:0 0 14px var(--cyan-dim); border-color:var(--cyan); }
+  .month-label{
+    font-family:'Orbitron', sans-serif; font-size:15px; letter-spacing:2px; min-width:190px; text-align:center;
+    color:var(--text);
+  }
+  .today-btn{
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel);
+    color:var(--text-dim); cursor:pointer; text-transform:uppercase;
+  }
+  .today-btn:hover{ color:var(--cyan); border-color:var(--cyan); }
+
+  .sync-bar{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:22px; }
+  .sync-status{ display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
+  .sync-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-faint); flex-shrink:0; }
+  .sync-status.connected .sync-dot{ background:var(--green); box-shadow:0 0 8px var(--green); }
+  .sync-status.connecting .sync-dot{ background:var(--amber); box-shadow:0 0 8px var(--amber); animation:pulse 1s infinite; }
+  .sync-status.error .sync-dot{ background:var(--danger); box-shadow:0 0 8px var(--danger); }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .sync-btn{
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel);
+    color:var(--text-dim); cursor:pointer; text-transform:uppercase; display:flex; align-items:center; gap:6px;
+  }
+  .sync-btn:hover{ color:var(--cyan); border-color:var(--cyan); }
+
+  .stats-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:26px; }
+  .stat-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 16px; position:relative; overflow:hidden;
+  }
+  .stat-card::before{ content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); }
+  .stat-card .val{ font-family:'Space Mono', monospace; font-size:26px; font-weight:700; color:var(--text); }
+  .stat-card .lbl{ font-size:12px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; margin-top:2px; }
+
+  .panel{
+    background: linear-gradient(180deg, var(--panel), var(--panel-alt));
+    border:1px solid var(--border); border-radius:16px; padding:20px 22px 24px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.35), inset 0 0 60px rgba(62,230,255,0.02);
+    overflow-x:auto;
+  }
+
+  .grid-table{ display:table; width:100%; border-collapse:separate; border-spacing:0; min-width:640px; }
+  .grid-row{ display:table-row; }
+  .grid-row.header-row .cell{ padding-bottom:10px; }
+  .cell{ display:table-cell; vertical-align:middle; padding:4px 3px; }
+
+  .habit-col{
+    display:table-cell; vertical-align:middle; min-width:170px; max-width:200px;
+    padding:9px 14px 9px 4px; position:sticky; left:0;
+    background: linear-gradient(90deg, var(--panel-alt) 85%, transparent);
+  }
+  .habit-name{ font-size:15px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .habit-meta{ display:flex; align-items:center; gap:8px; margin-top:3px; }
+  .streak-badge{
+    font-family:'Space Mono', monospace; font-size:11px; color:var(--amber);
+    display:flex; align-items:center; gap:3px;
+  }
+  .del-habit{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:14px;
+    padding:2px 4px; border-radius:4px; margin-left:auto; opacity:0; transition:opacity .15s;
+  }
+  .habit-col:hover .del-habit{ opacity:1; }
+  .del-habit:hover{ color:var(--danger); }
+
+  .day-head{ font-family:'Space Mono', monospace; font-size:11px; text-align:center; color:var(--text-faint); width:30px; opacity:0.5; }
+  .day-head .dnum{ display:block; font-size:12px; color:var(--text-dim); }
+  .day-head .dwk{ display:block; font-size:9px; letter-spacing:1px; margin-top:1px; }
+  .day-head.is-today{ opacity:1; }
+  .day-head.is-today .dnum{ color:var(--cyan); font-weight:700; }
+  .day-head.is-weekend:not(.is-today) .dwk{ color:var(--text-faint); }
+  .day-head.is-weekend.is-today .dwk{ color:var(--violet); }
+
+  .node-cell{ width:30px; text-align:center; position:relative; }
+  .node{
+    width:20px; height:20px; margin:0 auto; border-radius:6px;
+    border:1.5px solid rgba(125,139,163,0.35); background:rgba(255,255,255,0.02);
+    cursor:pointer; position:relative; transition: all .15s ease;
+  }
+  .node.today:hover{ border-color:var(--cyan); box-shadow:0 0 8px var(--cyan-dim); }
+  .node.today.checked{
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    border-color:transparent; box-shadow:0 0 12px rgba(62,230,255,0.55);
+  }
+  .node.today.checked::after{
+    content:''; position:absolute; left:50%; top:50%; width:6px; height:10px;
+    border-right:2px solid #061018; border-bottom:2px solid #061018;
+    transform:translate(-50%,-58%) rotate(45deg);
+  }
+  .node.today{ border-color: rgba(62,230,255,0.5); box-shadow: 0 0 6px rgba(62,230,255,0.15); }
+
+  .node.locked{ cursor:not-allowed; background:rgba(255,255,255,0.015); border-color:rgba(125,139,163,0.2); }
+  .node.locked.checked{ background: rgba(125,139,163,0.22); border-color:rgba(125,139,163,0.3); box-shadow:none; }
+  .node.locked.checked::after{
+    content:''; position:absolute; left:50%; top:50%; width:6px; height:10px;
+    border-right:2px solid rgba(230,240,251,0.55); border-bottom:2px solid rgba(230,240,251,0.55);
+    transform:translate(-50%,-58%) rotate(45deg);
+  }
+  .node.future{ opacity:0.35; border-style:dashed; }
+  .node.past:not(.checked){ opacity:0.45; }
+  .node.connect-left::before{
+    content:''; position:absolute; right:100%; top:50%; width:9px; height:2px;
+    background:rgba(125,139,163,0.4); transform:translateY(-50%);
+  }
+  .node.today.connect-left::before{ background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+
+  .add-habit-row{ margin-top:16px; display:flex; gap:10px; align-items:center; }
+  .add-habit-row input{
+    flex:1; max-width:320px; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); font-family:'Rajdhani',sans-serif; font-size:14px; padding:10px 14px;
+    border-radius:8px; outline:none;
+  }
+  .add-habit-row input::placeholder{ color:var(--text-faint); }
+  .add-habit-row input:focus{ border-color:var(--cyan); box-shadow:0 0 10px var(--cyan-dim); }
+  .add-habit-row button{
+    font-family:'Orbitron', sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    padding:10px 18px; border-radius:8px; border:1px solid var(--cyan); background:rgba(62,230,255,0.08);
+    color:var(--cyan); cursor:pointer; white-space:nowrap; transition: all .15s ease;
+  }
+  .add-habit-row button:hover{ background:rgba(62,230,255,0.18); box-shadow:0 0 14px var(--cyan-dim); }
+
+  .empty-state{ text-align:center; padding:36px 10px; color:var(--text-dim); }
+  .empty-state .glyph{ font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:3px; color:var(--cyan); margin-bottom:8px; }
+
+  .save-indicator{
+    position:fixed; bottom:18px; right:22px; font-family:'Space Mono',monospace; font-size:11px;
+    color:var(--text-dim); background:var(--panel); border:1px solid var(--border); padding:8px 14px;
+    border-radius:8px; opacity:0; transform:translateY(6px); transition: all .3s ease; z-index:5;
+  }
+  .save-indicator.show{ opacity:1; transform:translateY(0); }
+  .save-indicator .dot{ display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--cyan); margin-right:7px; box-shadow:0 0 6px var(--cyan); }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(3,6,12,0.75); backdrop-filter: blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:20; padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{
+    background: linear-gradient(180deg, var(--panel), var(--panel-alt));
+    border:1px solid var(--border); border-radius:16px; padding:26px 26px 22px;
+    max-width:480px; width:100%; max-height:86vh; overflow-y:auto;
+    box-shadow: 0 0 60px rgba(62,230,255,0.12);
+  }
+  .modal h2{ font-family:'Orbitron',sans-serif; font-size:16px; letter-spacing:1.5px; margin:0 0 6px; color:var(--text); }
+  .modal p{ font-size:13px; color:var(--text-dim); line-height:1.6; margin:0 0 14px; }
+  .modal a{ color:var(--cyan); }
+  .modal label{ display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); margin:14px 0 6px; }
+  .modal textarea, .modal input[type=text]{
+    width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--text);
+    font-family:'Space Mono',monospace; font-size:12px; padding:10px 12px; border-radius:8px; outline:none; resize:vertical;
+  }
+  .modal textarea{ height:120px; }
+  .modal textarea:focus, .modal input[type=text]:focus{ border-color:var(--cyan); box-shadow:0 0 10px var(--cyan-dim); }
+  .modal-actions{ display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+  .modal-actions button{
+    font-family:'Orbitron', sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    padding:10px 18px; border-radius:8px; cursor:pointer; transition: all .15s ease;
+  }
+  .btn-primary{ border:1px solid var(--cyan); background:rgba(62,230,255,0.1); color:var(--cyan); }
+  .btn-primary:hover{ background:rgba(62,230,255,0.2); box-shadow:0 0 14px var(--cyan-dim); }
+  .btn-secondary{ border:1px solid var(--border); background:transparent; color:var(--text-dim); }
+  .btn-secondary:hover{ color:var(--text); border-color:var(--text-dim); }
+  .modal-error{ font-size:12px; color:var(--danger); margin-top:10px; display:none; }
+  .modal-error.show{ display:block; }
+  .modal-note{
+    font-size:11px; color:var(--text-faint); border-top:1px solid var(--border); margin-top:18px; padding-top:14px; line-height:1.6;
+  }
+  .disconnect-link{ color:var(--danger); cursor:pointer; text-decoration:underline; font-size:12px; }
+
+  ::-webkit-scrollbar{ height:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2 6 4-12 2 6h4" stroke="#061018" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>ROCK HABITS</h1>
+        <p>daily protocol grid</p>
+      </div>
+    </div>
+    <div class="month-nav">
+      <button id="prevMonth" aria-label="Previous month">&#8249;</button>
+      <div class="month-label" id="monthLabel">—</div>
+      <button id="nextMonth" aria-label="Next month">&#8250;</button>
+      <button class="today-btn" id="todayBtn">Today</button>
+    </div>
+  </header>
+
+  <div class="sync-bar">
+    <div class="sync-status" id="syncStatus"><span class="sync-dot"></span><span id="syncStatusText">Local only — not synced</span></div>
+    <button class="sync-btn" id="openSettingsBtn">&#9881; Sync settings</button>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="panel">
+    <div id="tableWrap"></div>
+    <div class="add-habit-row">
+      <input type="text" id="newHabitInput" placeholder="new habit designation..." maxlength="40">
+      <button id="addHabitBtn">+ Add Habit</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="save-indicator" id="saveIndicator"><span class="dot"></span>synced</div>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <h2>Cross-device sync</h2>
+    <p>
+      Connect a free Firebase project so this tracker shares the same data across your laptop, phone, and any other device. One-time setup, takes a few minutes.
+    </p>
+    <p>
+      1. Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> and create a project (free tier).<br>
+      2. In the project, open <strong>Build → Firestore Database</strong> and click "Create database" (start in test mode).<br>
+      3. Click the gear icon → Project settings → scroll to "Your apps" → add a Web app → copy the <code>firebaseConfig</code> object shown.<br>
+      4. Paste that config below, choose a private sync code only you know, and connect.
+    </p>
+    <label for="configInput">Firebase config (paste the whole object)</label>
+    <textarea id="configInput" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}'></textarea>
+    <label for="syncCodeInput">Sync code (use the same code on every device)</label>
+    <input type="text" id="syncCodeInput" placeholder="e.g. my-habits-7k2x" maxlength="60">
+    <div class="modal-error" id="modalError"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelSettingsBtn">Cancel</button>
+      <button class="btn-primary" id="connectBtn">Connect</button>
+    </div>
+    <div class="modal-note" id="connectedNote" style="display:none;">
+      Connected with sync code <strong id="currentSyncCode"></strong>. <span class="disconnect-link" id="disconnectLink">Disconnect this device</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const CFG_KEY = 'nexus-firebase-config';
+const CODE_KEY = 'nexus-sync-code';
+const LOCAL_DATA_KEY = 'nexus-habit-tracker-data';
+
+let data = { habits: [], completions: {} };
+let view = new Date();
+view.setDate(1);
+
+let db = null;
+let docRef = null;
+let unsubscribe = null;
+let applyingRemote = false;
+const WEEKDAYS = ['S','M','T','W','T','F','S'];
+
+function fmtDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+const todayStr = () => fmtDate(new Date());
+function uid(){ return 'h_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function setSyncStatus(state, text){
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status ' + state;
+  document.getElementById('syncStatusText').textContent = text;
+}
+
+function loadLocalFallback(){
+  try{
+    const raw = window.localStorage.getItem(LOCAL_DATA_KEY);
+    if(raw) data = JSON.parse(raw);
+  }catch(e){}
+}
+function saveLocalFallback(){
+  try{ window.localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data)); }catch(e){}
+}
+
+async function initFirebase(config, syncCode){
+  setSyncStatus('connecting', 'Connecting...');
+  try{
+    if(!firebase.apps.length){
+      firebase.initializeApp(config);
+    }
+    db = firebase.firestore();
+    try{ await db.enablePersistence({ synchronizeTabs: true }); }catch(e){ /* fine if unsupported/multi-tab */ }
+    docRef = db.collection('habitTrackers').doc(syncCode);
+
+    const snap = await docRef.get();
+    if(snap.exists){
+      data = snap.data();
+      if(!data.habits) data.habits = [];
+      if(!data.completions) data.completions = {};
+    } else {
+      await docRef.set(data);
+    }
+
+    if(unsubscribe) unsubscribe();
+    unsubscribe = docRef.onSnapshot((docSnap)=>{
+      if(!docSnap.exists) return;
+      applyingRemote = true;
+      data = docSnap.data();
+      if(!data.habits) data.habits = [];
+      if(!data.completions) data.completions = {};
+      render();
+      applyingRemote = false;
+    }, (err)=>{
+      console.error(err);
+      setSyncStatus('error', 'Sync error — check console');
+    });
+
+    setSyncStatus('connected', 'Synced — code: ' + syncCode);
+    render();
+    return true;
+  }catch(e){
+    console.error(e);
+    setSyncStatus('error', 'Connection failed: ' + (e && e.message ? e.message : 'unknown error'));
+    return false;
+  }
+}
+
+async function saveData(){
+  saveLocalFallback();
+  if(docRef && !applyingRemote){
+    try{
+      await docRef.set(data);
+      flashSaved();
+    }catch(e){
+      console.error('cloud save failed', e);
+      setSyncStatus('error', 'Save failed — offline?');
+    }
+  } else if(!docRef){
+    flashSaved();
+  }
+}
+
+let saveTimer = null;
+function flashSaved(){
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=> el.classList.remove('show'), 1400);
+}
+
+function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+function computeStreak(habitId){
+  let streak = 0;
+  let cur = new Date();
+  while(true){
+    const key = habitId + '|' + fmtDate(cur);
+    if(data.completions[key]){
+      streak++;
+      cur.setDate(cur.getDate()-1);
+    } else break;
+  }
+  return streak;
+}
+
+function monthCompletionPct(y,m){
+  const dim = daysInMonth(y,m);
+  const today = new Date();
+  const isCurrentMonth = (today.getFullYear()===y && today.getMonth()===m);
+  const lastDay = isCurrentMonth ? today.getDate() : dim;
+  if(data.habits.length===0 || lastDay===0) return 0;
+  let total = data.habits.length * lastDay;
+  let done = 0;
+  data.habits.forEach(h=>{
+    for(let d=1; d<=lastDay; d++){
+      const key = h.id + '|' + y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      if(data.completions[key]) done++;
+    }
+  });
+  return total ? Math.round((done/total)*100) : 0;
+}
+
+function renderStats(){
+  const y = view.getFullYear(), m = view.getMonth();
+  const pct = monthCompletionPct(y,m);
+  const bestStreak = data.habits.reduce((max,h)=> Math.max(max, computeStreak(h.id)), 0);
+  const activeToday = data.habits.filter(h=> data.completions[h.id+'|'+todayStr()]).length;
+  const stats = document.getElementById('statsRow');
+  stats.innerHTML = `
+    <div class="stat-card"><div class="val">${data.habits.length}</div><div class="lbl">Active Habits</div></div>
+    <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">Month Completion</div></div>
+    <div class="stat-card"><div class="val">${bestStreak}</div><div class="lbl">Longest Streak</div></div>
+    <div class="stat-card"><div class="val">${activeToday}/${data.habits.length||0}</div><div class="lbl">Done Today</div></div>
+  `;
+}
+
+function render(){
+  const y = view.getFullYear(), m = view.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('monthLabel').textContent = monthNames[m] + ' ' + y;
+
+  renderStats();
+
+  const dim = daysInMonth(y,m);
+  const today = new Date();
+  const todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
+  const wrap = document.getElementById('tableWrap');
+
+  if(data.habits.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><div class="glyph">// NO HABITS DETECTED</div>Add your first habit below to begin tracking.</div>`;
+    return;
+  }
+
+  let html = '<div class="grid-table">';
+
+  html += '<div class="grid-row header-row"><div class="cell habit-col"></div>';
+  for(let d=1; d<=dim; d++){
+    const dow = new Date(y,m,d).getDay();
+    const isToday = (y===todayY && m===todayM && d===todayD);
+    const isWeekend = (dow===0 || dow===6);
+    html += `<div class="cell day-head${isToday?' is-today':''}${isWeekend?' is-weekend':''}">
+      <span class="dnum">${d}</span><span class="dwk">${WEEKDAYS[dow]}</span>
+    </div>`;
+  }
+  html += '</div>';
+
+  data.habits.forEach(h=>{
+    const streak = computeStreak(h.id);
+    html += `<div class="grid-row" data-habit="${h.id}">
+      <div class="cell habit-col">
+        <div class="habit-name">${escapeHtml(h.name)}</div>
+        <div class="habit-meta">
+          <span class="streak-badge">&#9679; ${streak}d streak</span>
+          <button class="del-habit" data-del="${h.id}" title="Remove habit">&#10005;</button>
+        </div>
+      </div>`;
+    let prevChecked = false;
+    for(let d=1; d<=dim; d++){
+      const dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const key = h.id + '|' + dateStr;
+      const checked = !!data.completions[key];
+      const cellDate = new Date(y,m,d);
+      const todayDate = new Date(todayY,todayM,todayD);
+      const isToday = cellDate.getTime() === todayDate.getTime();
+      const isFuture = cellDate > todayDate;
+      const stateClass = isToday ? 'today' : (isFuture ? 'future locked' : 'past locked');
+      html += `<div class="cell node-cell">
+        <div class="node ${stateClass} ${checked?'checked':''} ${(checked && prevChecked)?'connect-left':''}"
+             data-habit="${h.id}" data-date="${dateStr}" ${isToday?'onclick="toggleDay(this)"':''}></div>
+      </div>`;
+      prevChecked = checked;
+    }
+    html += '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  document.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = btn.getAttribute('data-del');
+      data.habits = data.habits.filter(h=> h.id !== id);
+      Object.keys(data.completions).forEach(k=>{ if(k.startsWith(id+'|')) delete data.completions[k]; });
+      saveData();
+      render();
+    });
+  });
+}
+
+window.toggleDay = function(el){
+  const habitId = el.getAttribute('data-habit');
+  const date = el.getAttribute('data-date');
+  const key = habitId + '|' + date;
+  if(data.completions[key]){
+    delete data.completions[key];
+  } else {
+    data.completions[key] = true;
+  }
+  saveData();
+  render();
+};
+
+document.getElementById('prevMonth').addEventListener('click', ()=>{ view.setMonth(view.getMonth()-1); render(); });
+document.getElementById('nextMonth').addEventListener('click', ()=>{ view.setMonth(view.getMonth()+1); render(); });
+function scrollToToday(){
+  requestAnimationFrame(()=>{
+    const todayCell = document.querySelector('.node.today') || document.querySelector('.day-head.is-today');
+    if(todayCell){
+      todayCell.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+    }
+  });
+}
+
+document.getElementById('todayBtn').addEventListener('click', ()=>{ view = new Date(); view.setDate(1); render(); scrollToToday(); });
+
+function addHabit(){
+  const input = document.getElementById('newHabitInput');
+  const name = input.value.trim();
+  if(!name) return;
+  data.habits.push({ id: uid(), name: name });
+  input.value = '';
+  saveData();
+  render();
+}
+document.getElementById('addHabitBtn').addEventListener('click', addHabit);
+document.getElementById('newHabitInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') addHabit(); });
+
+const overlay = document.getElementById('settingsOverlay');
+const configInput = document.getElementById('configInput');
+const syncCodeInput = document.getElementById('syncCodeInput');
+const modalError = document.getElementById('modalError');
+const connectedNote = document.getElementById('connectedNote');
+
+function openSettings(){
+  modalError.classList.remove('show');
+  const savedCfg = localStorage.getItem(CFG_KEY);
+  const savedCode = localStorage.getItem(CODE_KEY);
+  if(savedCfg) configInput.value = savedCfg;
+  if(savedCode){
+    syncCodeInput.value = savedCode;
+    connectedNote.style.display = 'block';
+    document.getElementById('currentSyncCode').textContent = savedCode;
+  } else {
+    connectedNote.style.display = 'none';
+  }
+  overlay.classList.add('show');
+}
+document.getElementById('openSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('cancelSettingsBtn').addEventListener('click', ()=> overlay.classList.remove('show'));
+
+document.getElementById('connectBtn').addEventListener('click', async ()=>{
+  modalError.classList.remove('show');
+  let cfg;
+  try{
+    cfg = JSON.parse(configInput.value.trim());
+  }catch(e){
+    modalError.textContent = "That config doesn't look like valid JSON. Copy it exactly as shown in Firebase settings.";
+    modalError.classList.add('show');
+    return;
+  }
+  const code = syncCodeInput.value.trim();
+  if(!code){
+    modalError.textContent = 'Enter a sync code — any private phrase, used the same on every device.';
+    modalError.classList.add('show');
+    return;
+  }
+  const ok = await initFirebase(cfg, code);
+  if(ok){
+    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+    localStorage.setItem(CODE_KEY, code);
+    overlay.classList.remove('show');
+  } else {
+    modalError.textContent = 'Could not connect. Check your config values and that Firestore is enabled in test mode.';
+    modalError.classList.add('show');
+  }
+});
+
+document.getElementById('disconnectLink').addEventListener('click', ()=>{
+  localStorage.removeItem(CFG_KEY);
+  localStorage.removeItem(CODE_KEY);
+  if(unsubscribe) unsubscribe();
+  docRef = null; db = null;
+  setSyncStatus('', 'Local only — not synced');
+  overlay.classList.remove('show');
+});
+
+async function boot(){
+  loadLocalFallback();
+  render();
+  scrollToToday();
+  const savedCfg = localStorage.getItem(CFG_KEY);
+  const savedCode = localStorage.getItem(CODE_KEY);
+  if(savedCfg && savedCode){
+    try{
+      await initFirebase(JSON.parse(savedCfg), savedCode);
+      scrollToToday();
+    }catch(e){
+      setSyncStatus('error', 'Auto-connect failed');
+    }
+  }
+}
+boot();
+</script>
+</body>
+</html>
